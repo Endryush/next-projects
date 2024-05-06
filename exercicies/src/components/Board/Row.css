@@ -1,0 +1,6 @@
+.board-row {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  max-width: calc(100%/8);
+}
