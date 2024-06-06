@@ -5,7 +5,11 @@ import MenuItem from "./MenuItem";
 
 export default function Sidebar () {
   return (
-    <aside className="flex  flex-col">
+    <aside className={`
+      flex flex-col 
+      bg-gray-200  text-gray-700
+      dark:bg-gray-800 dark:text-gray-200
+    `}>
       <div className={`
         flex flex-col items-center justify-center
         h-20 w-20 
@@ -21,7 +25,11 @@ export default function Sidebar () {
       <ul>
         <MenuItem 
           text='Sair'
-          customClass="text-red-600 hover:bg-red-400 hover:text-white"
+          customClass={`
+            text-red-600 dark:text-red-400
+            hover:bg-red-400 hover:text-white
+            dark:hover:text-white
+          `}
           icon={LogoutIcon} onCLick={() => console.log('logout')} 
         />
       </ul>
