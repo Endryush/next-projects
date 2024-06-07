@@ -1,9 +1,11 @@
 'use client';
+import useAuth from "@/data/hook/useAuth";
 import { BellIcon, HomeIcon, LogoutIcon, SettingsIcon } from "../icons";
 import Logo from "./Logo";
 import MenuItem from "./MenuItem";
 
 export default function Sidebar () {
+  const { logout } = useAuth()
   return (
     <aside className={`
       flex flex-col 
@@ -30,7 +32,8 @@ export default function Sidebar () {
             hover:bg-red-400 hover:text-white
             dark:hover:text-white
           `}
-          icon={LogoutIcon} onCLick={() => console.log('logout')} 
+          icon={LogoutIcon} 
+          onCLick={logout}
         />
       </ul>
     </aside>

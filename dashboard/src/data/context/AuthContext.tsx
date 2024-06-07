@@ -2,11 +2,12 @@
 import { useRouter } from 'next/navigation';
 import firebase from '@/firebase/config'
 import User from '@/interfaces/User';
-import { createContext, ReactNode, useState } from 'react'
-
+import { createContext, ReactNode, useEffect, useState } from 'react'
+import Cookies from 'js-cookie'
 interface AuthContextProps {
-  user?: User,
+  user?: User | null,
   googleLogin?: () => Promise<void>
+  logout?: () => Promise<void>
 }
 
 interface AuthProviderProps {
@@ -28,27 +29,88 @@ async function formattedUser (firebaseUser: firebase.User) : Promise<User> {
   }
 }
 
+function manageCookies (isLogged: boolean) {
+  if (isLogged) {
+    Cookies.set('admin-template-auth', isLogged.toString() , {
+      expires: 7
+    })
+  } else {
+    Cookies.remove('admin-template-auth')
+  }
+}
+
 export function AuthProvider(props: AuthProviderProps) {
-  const [user, setUser] = useState<User>()
+  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<User | null>(null)
   const router = useRouter()
 
-  async function googleLogin () {
-    const response = await firebase.auth().signInWithPopup(
-      new firebase.auth.GoogleAuthProvider()
-    )
+  async function configUserSession (firebaseUser:  firebase.User | null): Promise<string | boolean> {
+    try {
+      if (firebaseUser?.email) {
+        const user = await formattedUser(firebaseUser)
+        setUser(user)
+        manageCookies(true)
 
-    if (response.user?.email) {
-      const user = await formattedUser(response.user)
-      setUser(user)
-      router.push('/')
+        return user.email ?? ''
+      } 
+
+      setUser(null)
+      manageCookies(false)
+
+      return false
+    } catch (error) {
+      console.error(error)
+      return false
+    } finally {
+      setLoading(false)
     }
   }
+
+  async function googleLogin () {
+    try {
+      setLoading(true)
+      const response = await firebase.auth().signInWithPopup(
+        new firebase.auth.GoogleAuthProvider()
+      )
+  
+      if (response.user) {
+        configUserSession(response.user)
+        router.push('/')
+      }
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setLoading(true)
+    }
+  }
+
+  async function logout () {
+    try {
+      setLoading(true)
+      await firebase.auth().signOut()
+      await configUserSession(null)
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setLoading(false)
+      router.push('/auth')
+    }
+  }
+
+  useEffect(() => {
+    if(Cookies.get('admin-template-auth')) {
+      const cancelObserver = firebase.auth().onIdTokenChanged(configUserSession)
+  
+      return () => cancelObserver()
+    }
+  }, [])
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        googleLogin
+        googleLogin,
+        logout
       }}
     >
       {props.children}
