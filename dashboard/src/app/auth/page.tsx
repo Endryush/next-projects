@@ -5,7 +5,7 @@ import useAuth from "@/data/hook/useAuth";
 import { useState } from "react";
 
 export default function Auth () {
-  const { user, googleLogin } = useAuth()
+  const { googleLogin, login, register } = useAuth()
 
 
   const [email, setEmail] = useState('')
@@ -16,18 +16,23 @@ export default function Auth () {
 
   function handleError (msg: string, seconds: number = 3) {
     setError(msg)
-    const errorTimeout = setTimeout(() =>{ setError('')}, seconds * 1000)
+    setTimeout(() =>{ setError('')}, seconds * 1000)
   }
 
   function handleLoginScreen () {
     setIsLogin(!isLogin)
   }
 
-  function handleForm () {
-    if (isLogin) {
-      console.log('login')
-    } else {
-      console.log('cadastro')
+  async function handleForm () {
+    try {
+      if (isLogin) return login ? await login(email, password) : handleError('Um erro ocorreu, por favor recarregue a página!')
+
+      if (password === confirmPassword) return register ? await register(email, password) : handleError('Um erro ocorreu, por favor recarregue a página!')
+      
+      handleError('As senhas não conferem')
+    } catch (error) {
+      const message = isLogin ? 'Email ou senha não conferem!' : 'Ocorreu um erro, tente novamente mais tarde!'
+      handleError(message)
     }
   }
 

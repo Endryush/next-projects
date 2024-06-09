@@ -8,7 +8,9 @@ import {Cookies as CookiesEnum} from '@/enum/cookies';
 interface AuthContextProps {
   user?: User | null,
   loading?: boolean,
-  googleLogin?: () => Promise<void>
+  googleLogin?: () => Promise<void>,
+  login?: (email: string, password: string) => Promise<void>,
+  register?: (email: string, password: string) => Promise<void>,
   logout?: () => Promise<void>
 }
 
@@ -68,7 +70,7 @@ export function AuthProvider(props: AuthProviderProps) {
     }
   }
 
-  async function googleLogin () {
+  async function googleLogin (): Promise<void> {
     try {
       setLoading(true)
       const response = await firebase.auth().signInWithPopup(
@@ -80,9 +82,43 @@ export function AuthProvider(props: AuthProviderProps) {
         router.push('/')
       }
     } catch (error) {
-      console.error(error)
+      throw error
     } finally {
+      setLoading(false)
+    }
+  }
+
+  async function login (email: string, password: string): Promise<void> {
+    try {
       setLoading(true)
+      const response = await firebase.auth()
+        .signInWithEmailAndPassword(email, password)
+  
+      if (response.user) {
+        await configUserSession(response.user)
+        router.push('/')
+      }
+    } catch (error) {
+      throw error
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function register (email: string, password: string): Promise<void> {
+    try {
+      setLoading(true)
+      const response = await firebase.auth()
+        .createUserWithEmailAndPassword(email, password)
+  
+      if (response.user) {
+        await configUserSession(response.user)
+        router.push('/')
+      }
+    } catch (error) {
+      throw error
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -114,6 +150,8 @@ export function AuthProvider(props: AuthProviderProps) {
       value={{
         user,
         loading,
+        register,
+        login,
         googleLogin,
         logout
       }}
