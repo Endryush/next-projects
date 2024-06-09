@@ -4,8 +4,10 @@ import firebase from '@/firebase/config'
 import User from '@/interfaces/User';
 import { createContext, ReactNode, useEffect, useState } from 'react'
 import Cookies from 'js-cookie'
+import {Cookies as CookiesEnum} from '@/enum/cookies';
 interface AuthContextProps {
   user?: User | null,
+  loading?: boolean,
   googleLogin?: () => Promise<void>
   logout?: () => Promise<void>
 }
@@ -31,11 +33,11 @@ async function formattedUser (firebaseUser: firebase.User) : Promise<User> {
 
 function manageCookies (isLogged: boolean) {
   if (isLogged) {
-    Cookies.set('admin-template-auth', isLogged.toString() , {
+    Cookies.set(CookiesEnum.AdminCookieAuth, isLogged.toString() , {
       expires: 7
     })
   } else {
-    Cookies.remove('admin-template-auth')
+    Cookies.remove(CookiesEnum.AdminCookieAuth)
   }
 }
 
@@ -98,10 +100,12 @@ export function AuthProvider(props: AuthProviderProps) {
   }
 
   useEffect(() => {
-    if(Cookies.get('admin-template-auth')) {
+    if(Cookies.get(CookiesEnum.AdminCookieAuth)) {
       const cancelObserver = firebase.auth().onIdTokenChanged(configUserSession)
   
       return () => cancelObserver()
+    } else {
+      setLoading(false)
     }
   }, [])
 
@@ -109,6 +113,7 @@ export function AuthProvider(props: AuthProviderProps) {
     <AuthContext.Provider
       value={{
         user,
+        loading,
         googleLogin,
         logout
       }}
